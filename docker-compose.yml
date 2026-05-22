@@ -1,0 +1,16 @@
+services:
+  otelcol:
+    image: otel/opentelemetry-collector-contrib:0.110.0
+    container_name: ai-otelcol
+    command: ["--config=/etc/otelcol/config.yaml"]
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "9464:9464"   # Prometheus scrape
+      - "13133:13133" # health check
+    volumes:
+      - ./otelcol/config.yaml:/etc/otelcol/config.yaml:ro
+    restart: unless-stopped

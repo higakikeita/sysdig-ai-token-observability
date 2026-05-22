@@ -1,0 +1,52 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+
+  # OTel resource attrs (service.name etc.) を Prometheus label に乗せる
+  # ↓を入れないと service_name 等で集計できないので必須
+  # ※ exporter 側の resource_to_telemetry_conversion: enabled と併用
+
+exporters:
+  # A) Sysdig Agent から scrape させる用 (任意)
+  prometheus:
+    endpoint: 0.0.0.0:9464
+    resource_to_telemetry_conversion:
+      enabled: true
+    enable_open_metrics: true
+
+  # B) Sysdig Monitor へ直送 (推奨。検証はこれで完結)
+  prometheusremotewrite/sysdig:
+    endpoint: ${env:SYSDIG_MONITOR_URL}/prometheus/remote/write
+    headers:
+      Authorization: "Bearer ${env:SYSDIG_API_TOKEN}"
+    resource_to_telemetry_conversion:
+      enabled: true
+    tls:
+      insecure: false
+
+  debug:
+    verbosity: basic
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, prometheusremotewrite/sysdig, debug]
+  telemetry:
+    logs:
+      level: ${env:OTEL_LOG_LEVEL}
