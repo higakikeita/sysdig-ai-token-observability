@@ -50,14 +50,14 @@
         "id": 3,
         "type": "advancedTimechart",
         "name": "Claude Code token rate by type",
-        "description": "rate(claude_code_token_usage_total[5m]) grouped by type",
+        "description": "rate(claude_code_token_usage_tokens_total[5m]) grouped by type",
         "panelTitleVisible": true,
         "advancedQueries": [
           {
             "enabled": true,
             "displayInfo": { "displayName": "{{type}}", "type": "lines" },
             "format": { "unit": "number", "inputFormat": 1, "displayFormat": "auto", "yAxis": "auto" },
-            "query": "sum by (type) (rate(claude_code_token_usage_total[5m]))"
+            "query": "sum by (type) (rate(claude_code_token_usage_tokens_total[5m]))"
           }
         ],
         "axesConfiguration": {
@@ -71,14 +71,14 @@
         "id": 4,
         "type": "advancedTimechart",
         "name": "Claude Code cost rate (USD/s)",
-        "description": "rate(claude_code_cost_usage_total[5m])",
+        "description": "rate(claude_code_cost_usage_USD_total[5m])",
         "panelTitleVisible": true,
         "advancedQueries": [
           {
             "enabled": true,
             "displayInfo": { "displayName": "{{model}}", "type": "lines" },
             "format": { "unit": "number", "inputFormat": 1, "displayFormat": "auto", "decimals": 4, "yAxis": "auto" },
-            "query": "sum by (model) (rate(claude_code_cost_usage_total[5m]))"
+            "query": "sum by (model) (rate(claude_code_cost_usage_USD_total[5m]))"
           }
         ],
         "axesConfiguration": {
@@ -119,7 +119,7 @@
             "enabled": true,
             "displayInfo": { "displayName": "cache hit ratio", "type": "lines" },
             "format": { "unit": "number", "inputFormat": 1, "displayFormat": "auto", "decimals": 2, "yAxis": "auto" },
-            "query": "sum(rate(claude_code_token_usage_total{type=\"cacheRead\"}[5m])) / sum(rate(claude_code_token_usage_total{type=~\"input|cacheRead\"}[5m]))"
+            "query": "sum(rate(claude_code_token_usage_tokens_total{type=\"cacheRead\"}[5m])) / sum(rate(claude_code_token_usage_tokens_total{type=~\"input|cacheRead\"}[5m]))"
           }
         ],
         "axesConfiguration": {
