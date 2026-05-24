@@ -54,21 +54,21 @@ topk(5,
 ### Token rate by type
 ```promql
 sum by (type, model) (
-  rate(claude_code_token_usage_total[5m])
+  rate(claude_code_token_usage_tokens_total[5m])
 )
 ```
 
 ### Cache effectiveness (read vs total input-like)
 ```promql
-sum(rate(claude_code_token_usage_total{type="cacheRead"}[5m]))
+sum(rate(claude_code_token_usage_tokens_total{type="cacheRead"}[5m]))
 /
-sum(rate(claude_code_token_usage_total{type=~"input|cacheRead"}[5m]))
+sum(rate(claude_code_token_usage_tokens_total{type=~"input|cacheRead"}[5m]))
 ```
 
 ### Estimated cost per hour (USD)
 ```promql
 sum by (model) (
-  increase(claude_code_cost_usage_total[1h])
+  increase(claude_code_cost_usage_USD_total[1h])
 )
 ```
 
@@ -94,7 +94,7 @@ histogram_quantile(
 sum by (service_name) (rate(gen_ai_client_token_usage_total[1m])) * 60 > 100000
 
 # Hourly Claude Code spend > $5
-sum(increase(claude_code_cost_usage_total[1h])) > 5
+sum(increase(claude_code_cost_usage_USD_total[1h])) > 5
 ```
 
 ## Notes

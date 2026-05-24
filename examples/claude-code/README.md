@@ -36,13 +36,17 @@ claude  ──OTLP──>  otelcol :4317  ──Remote Write──>  Sysdig Moni
 
 ## Metrics emitted
 
+> The OTel Collector's Prometheus exporter appends the metric **unit** to the
+> name (so `claude_code.token.usage` with unit `tokens` becomes
+> `claude_code_token_usage_tokens_total` on the wire). Annotation-style units
+> like `{session}` are stripped.
+
 | Metric (Prometheus name)                        | Type      | Key labels                                   |
 |-------------------------------------------------|-----------|----------------------------------------------|
-| `claude_code_token_usage_total`                 | Counter   | `type` (input/output/cacheRead/cacheCreation), `model` |
-| `claude_code_cost_usage_total`                  | Counter   | `model`                                      |
-| `claude_code_api_request_duration_milliseconds` | Histogram | `model`                                      |
+| `claude_code_token_usage_tokens_total`          | Counter   | `type` (input/output/cacheRead/cacheCreation), `model` |
+| `claude_code_cost_usage_USD_total`              | Counter   | `model`                                      |
+| `claude_code_active_time_seconds_total`         | Counter   | `type` (cli/user)                            |
 | `claude_code_session_count_total`               | Counter   |                                              |
-| `claude_code_active_time_total`                 | Counter   |                                              |
 
 ## Verify locally
 
@@ -54,13 +58,13 @@ curl -s localhost:9464/metrics | grep claude_code_
 
 ```promql
 # Token rate by type
-sum by (type) (rate(claude_code_token_usage_total[5m]))
+sum by (type) (rate(claude_code_token_usage_tokens_total[5m]))
 
 # Cumulative cost in last hour
-sum(increase(claude_code_cost_usage_total[1h]))
+sum(increase(claude_code_cost_usage_USD_total[1h]))
 
 # Cache hit ratio (cache-read tokens / total input-like tokens)
-sum(rate(claude_code_token_usage_total{type="cacheRead"}[5m]))
+sum(rate(claude_code_token_usage_tokens_total{type="cacheRead"}[5m]))
   /
-sum(rate(claude_code_token_usage_total{type=~"input|cacheRead"}[5m]))
+sum(rate(claude_code_token_usage_tokens_total{type=~"input|cacheRead"}[5m]))
 ```

@@ -91,8 +91,19 @@ claude
 Now you can watch your *own* coding-agent usage in Sysdig:
 
 ```promql
-sum by (type, model)(rate(claude_code_token_usage_total[5m]))
-sum(increase(claude_code_cost_usage_total[1h]))   # USD/hour
+sum by (type, model)(rate(claude_code_token_usage_tokens_total[5m]))
+sum(increase(claude_code_cost_usage_USD_total[1h]))   # USD/hour
+```
+
+> **Note on metric names** — the OTel Collector's Prometheus exporter appends the unit to the metric name (so `claude_code.token.usage` with unit `tokens` becomes `claude_code_token_usage_tokens_total`). Annotation units like `{token}` are stripped, which is why `gen_ai.client.token.usage` becomes the cleaner `gen_ai_client_token_usage_total`. See **Notes & gotchas** below.
+
+## Try the dashboard without an API key
+
+`examples/synthetic-demo/generate.py` emits realistic synthetic metrics across all 6 dashboard panels. Two minutes and you have a fully populated dashboard — no OpenAI / Anthropic credits needed.
+
+```bash
+python examples/synthetic-demo/generate.py            # 12 pulses (2 min)
+python examples/synthetic-demo/generate.py --forever  # keep going
 ```
 
 ## What's in the box
@@ -103,7 +114,8 @@ sum(increase(claude_code_cost_usage_total[1h]))   # USD/hour
 ├── otelcol/config.yaml        # OTLP -> Prometheus + Sysdig Remote Write
 ├── examples/
 │   ├── python-openai/         # GenAI semconv emitter (one HTTP call, two counters)
-│   └── claude-code/           # env-var recipe for Claude Code OTLP
+│   ├── claude-code/           # env-var recipe for Claude Code OTLP
+│   └── synthetic-demo/        # populate dashboard without API keys
 ├── sysdig/
 │   ├── dashboard.json         # v3 dashboard, 6 panels
 │   └── promql-queries.md      # PromQL cookbook
@@ -127,6 +139,31 @@ Use the **Monitor** API token (not the Secure token).
 - **High cardinality:** the GenAI conventions are intentionally low-cardinality (model, token-type, service). Don't add per-user labels unless your billing model needs them — it will blow up your metric count.
 - **Secret rotation:** the only secret is `SYSDIG_API_TOKEN`. Scope it to a Monitor-only team and rotate it via your secret manager of choice.
 - **No prompt content** is captured — only counters and resource attributes.
+
+## Notes & gotchas
+
+Three behaviours that surprised us while building this — encoded in the repo, but worth knowing if you adapt the dashboard or emit your own metrics.
+
+### 1. OTel Prometheus exporter appends the unit to the metric name
+
+Counter `claude_code.token.usage` with `unit: tokens` becomes `claude_code_token_usage_**tokens**_total` on the wire, not `claude_code_token_usage_total`. Annotation-style units like `{token}` (curly-braced) are stripped, so `gen_ai.client.token.usage` becomes the cleaner `gen_ai_client_token_usage_total`. Use the **on-the-wire** name in PromQL.
+
+### 2. Sysdig v3 dashboard schema has non-obvious requirements
+
+When `POST`ing to `/api/v3/dashboards`:
+
+- `inputFormat` / `minInputFormat` / `maxInputFormat` are **integers**, not strings. `1` means "identity scale". Strings like `"number"` / `"0.00"` / `"auto"` are silently treated as null.
+- `dashboard.version` must **not** be set on create. Sysdig returns "New dashboard can't have version id."
+- When a panel's `unit` is `"%"`, `inputFormat: 1` is rejected with "Format/Prefix does not match the unit". Use `unit: "number"` for ratio panels and label the axis instead.
+- `axesConfiguration.right` and `legendConfiguration.{showCurrent,layout}` are mandatory even when not visually used.
+
+The committed `sysdig/dashboard.json` reflects all of the above; copy from it when adding panels.
+
+### 3. New custom metrics may take a few minutes to surface in Sysdig
+
+First-time custom metrics sent via Remote Write can be silently dropped or queued during initial ingestion (~30-90s observed). Once the metric name is registered, subsequent sends flow normally. If your dashboard stays empty after the first push, **wait 1–2 minutes and re-query** before assuming a config error.
+
+A reliable way to "register" the metric name is the synthetic demo script — run it once, and real producers (Claude Code, your OpenAI app) will start showing up immediately afterwards.
 
 ## License
 
