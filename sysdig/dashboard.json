@@ -1,7 +1,6 @@
 {
   "dashboard": {
     "schema": 3,
-    "version": 1,
     "name": "AI Token Usage Observability",
     "description": "GenAI (OpenTelemetry semconv) + Claude Code native metrics via OTel Collector -> Sysdig Monitor",
     "panels": [
@@ -10,91 +9,134 @@
         "type": "advancedTimechart",
         "name": "GenAI token rate by model",
         "description": "rate(gen_ai_client_token_usage_total[5m]) grouped by model",
+        "panelTitleVisible": true,
         "advancedQueries": [
           {
             "enabled": true,
             "displayInfo": { "displayName": "{{gen_ai_request_model}}", "type": "lines" },
-            "format": { "unit": "number", "displayFormat": "auto" },
+            "format": { "unit": "number", "inputFormat": 1, "displayFormat": "auto", "yAxis": "auto" },
             "query": "sum by (gen_ai_request_model) (rate(gen_ai_client_token_usage_total[5m]))"
           }
-        ]
+        ],
+        "axesConfiguration": {
+          "bottom": { "enabled": true },
+          "left":  { "enabled": true, "displayName": "tokens/s", "unit": "number", "displayFormat": "auto", "minValue": 0, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" },
+          "right": { "enabled": false, "displayName": "", "unit": "number", "displayFormat": "auto", "minValue": 0, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" }
+        },
+        "legendConfiguration": { "enabled": true, "position": "right", "layout": "table", "showCurrent": true }
       },
       {
         "id": 2,
         "type": "advancedTimechart",
         "name": "Input vs Output tokens",
         "description": "Split by gen_ai.token.type",
+        "panelTitleVisible": true,
         "advancedQueries": [
           {
             "enabled": true,
             "displayInfo": { "displayName": "{{gen_ai_token_type}}", "type": "lines" },
-            "format": { "unit": "number", "displayFormat": "auto" },
+            "format": { "unit": "number", "inputFormat": 1, "displayFormat": "auto", "yAxis": "auto" },
             "query": "sum by (gen_ai_token_type) (rate(gen_ai_client_token_usage_total[5m]))"
           }
-        ]
+        ],
+        "axesConfiguration": {
+          "bottom": { "enabled": true },
+          "left":  { "enabled": true, "displayName": "tokens/s", "unit": "number", "displayFormat": "auto", "minValue": 0, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" },
+          "right": { "enabled": false, "displayName": "", "unit": "number", "displayFormat": "auto", "minValue": 0, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" }
+        },
+        "legendConfiguration": { "enabled": true, "position": "right", "layout": "table", "showCurrent": true }
       },
       {
         "id": 3,
         "type": "advancedTimechart",
         "name": "Claude Code token rate by type",
-        "description": "rate(claude_code_token_usage_total[5m]) grouped by type (input/output/cacheRead/cacheCreation)",
+        "description": "rate(claude_code_token_usage_total[5m]) grouped by type",
+        "panelTitleVisible": true,
         "advancedQueries": [
           {
             "enabled": true,
             "displayInfo": { "displayName": "{{type}}", "type": "lines" },
-            "format": { "unit": "number", "displayFormat": "auto" },
+            "format": { "unit": "number", "inputFormat": 1, "displayFormat": "auto", "yAxis": "auto" },
             "query": "sum by (type) (rate(claude_code_token_usage_total[5m]))"
           }
-        ]
+        ],
+        "axesConfiguration": {
+          "bottom": { "enabled": true },
+          "left":  { "enabled": true, "displayName": "tokens/s", "unit": "number", "displayFormat": "auto", "minValue": 0, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" },
+          "right": { "enabled": false, "displayName": "", "unit": "number", "displayFormat": "auto", "minValue": 0, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" }
+        },
+        "legendConfiguration": { "enabled": true, "position": "right", "layout": "table", "showCurrent": true }
       },
       {
         "id": 4,
-        "type": "advancedNumber",
-        "name": "Claude Code cost (last 1h, USD)",
+        "type": "advancedTimechart",
+        "name": "Claude Code cost rate (USD/s)",
+        "description": "rate(claude_code_cost_usage_total[5m])",
+        "panelTitleVisible": true,
         "advancedQueries": [
           {
             "enabled": true,
-            "displayInfo": { "displayName": "USD/hour", "type": "default" },
-            "format": { "unit": "number", "displayFormat": "auto", "decimals": 2 },
-            "query": "sum(increase(claude_code_cost_usage_total[1h]))"
+            "displayInfo": { "displayName": "{{model}}", "type": "lines" },
+            "format": { "unit": "number", "inputFormat": 1, "displayFormat": "auto", "decimals": 4, "yAxis": "auto" },
+            "query": "sum by (model) (rate(claude_code_cost_usage_total[5m]))"
           }
-        ]
+        ],
+        "axesConfiguration": {
+          "bottom": { "enabled": true },
+          "left":  { "enabled": true, "displayName": "USD/s", "unit": "number", "displayFormat": "auto", "minValue": 0, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" },
+          "right": { "enabled": false, "displayName": "", "unit": "number", "displayFormat": "auto", "minValue": 0, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" }
+        },
+        "legendConfiguration": { "enabled": true, "position": "right", "layout": "table", "showCurrent": true }
       },
       {
         "id": 5,
         "type": "advancedTimechart",
         "name": "Top 5 services by tokens (1h)",
+        "panelTitleVisible": true,
         "advancedQueries": [
           {
             "enabled": true,
             "displayInfo": { "displayName": "{{service_name}}", "type": "lines" },
-            "format": { "unit": "number", "displayFormat": "auto" },
+            "format": { "unit": "number", "inputFormat": 1, "displayFormat": "auto", "yAxis": "auto" },
             "query": "topk(5, sum by (service_name) (increase(gen_ai_client_token_usage_total[1h])))"
           }
-        ]
+        ],
+        "axesConfiguration": {
+          "bottom": { "enabled": true },
+          "left":  { "enabled": true, "displayName": "tokens / 1h", "unit": "number", "displayFormat": "auto", "minValue": 0, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" },
+          "right": { "enabled": false, "displayName": "", "unit": "number", "displayFormat": "auto", "minValue": 0, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" }
+        },
+        "legendConfiguration": { "enabled": true, "position": "right", "layout": "table", "showCurrent": true }
       },
       {
         "id": 6,
         "type": "advancedTimechart",
         "name": "Claude Code cache hit ratio",
         "description": "cacheRead / (input + cacheRead)",
+        "panelTitleVisible": true,
         "advancedQueries": [
           {
             "enabled": true,
-            "displayInfo": { "displayName": "ratio", "type": "lines" },
-            "format": { "unit": "percent", "displayFormat": "auto", "decimals": 2 },
+            "displayInfo": { "displayName": "cache hit ratio", "type": "lines" },
+            "format": { "unit": "number", "inputFormat": 1, "displayFormat": "auto", "decimals": 2, "yAxis": "auto" },
             "query": "sum(rate(claude_code_token_usage_total{type=\"cacheRead\"}[5m])) / sum(rate(claude_code_token_usage_total{type=~\"input|cacheRead\"}[5m]))"
           }
-        ]
+        ],
+        "axesConfiguration": {
+          "bottom": { "enabled": true },
+          "left":  { "enabled": true, "displayName": "ratio (0-1)", "unit": "number", "displayFormat": "auto", "minValue": 0, "maxValue": 1, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" },
+          "right": { "enabled": false, "displayName": "", "unit": "number", "displayFormat": "auto", "minValue": 0, "minInputFormat": 1, "maxInputFormat": 1, "scale": "linear" }
+        },
+        "legendConfiguration": { "enabled": true, "position": "right", "layout": "table", "showCurrent": true }
       }
     ],
     "layout": [
       { "panelId": 1, "x": 0,  "y": 0,  "w": 12, "h": 6 },
       { "panelId": 2, "x": 12, "y": 0,  "w": 12, "h": 6 },
       { "panelId": 3, "x": 0,  "y": 6,  "w": 12, "h": 6 },
-      { "panelId": 4, "x": 12, "y": 6,  "w": 6,  "h": 6 },
-      { "panelId": 5, "x": 18, "y": 6,  "w": 6,  "h": 6 },
-      { "panelId": 6, "x": 0,  "y": 12, "w": 12, "h": 6 }
+      { "panelId": 4, "x": 12, "y": 6,  "w": 12, "h": 6 },
+      { "panelId": 5, "x": 0,  "y": 12, "w": 12, "h": 6 },
+      { "panelId": 6, "x": 12, "y": 12, "w": 12, "h": 6 }
     ]
   }
 }
